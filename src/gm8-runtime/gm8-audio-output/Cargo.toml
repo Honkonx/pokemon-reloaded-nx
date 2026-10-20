@@ -1,0 +1,9 @@
+[package]
+name = "gm8-audio-output"
+version = "0.1.0"
+edition = "2021"
+license = "GPL-2.0-only"
+description = "Portable interleaved PCM producer contract for the OpenGMK runtime"
+
+[lib]
+path = "src/lib.rs"

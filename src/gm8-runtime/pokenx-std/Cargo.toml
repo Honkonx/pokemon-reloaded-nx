@@ -1,0 +1,20 @@
+[package]
+name = "pokenx-std"
+version = "0.1.0"
+edition = "2021"
+license = "GPL-2.0-only"
+description = "Minimal std replacement for Horizon (core + alloc + newlib/libnx) with a transparent passthrough to std on hosts"
+
+[lib]
+path = "src/lib.rs"
+
+[features]
+default = ["std"]
+# Re-export the real std (host builds, tests). Without it the Horizon implementation is used.
+std = []
+
+[dependencies]
+hashbrown = { version = "0.15", default-features = false, features = ["default-hasher", "inline-more", "serde"] }
+libm = "0.2"
+pokenx-io = { path = "../pokenx-io", default-features = false }
+spin = { version = "0.9", default-features = false, features = ["mutex", "spin_mutex", "rwlock", "once"] }

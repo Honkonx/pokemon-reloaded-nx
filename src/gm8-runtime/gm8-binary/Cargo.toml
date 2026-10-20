@@ -1,0 +1,11 @@
+[package]
+name = "gm8-binary"
+version = "0.1.0"
+edition = "2021"
+license = "GPL-2.0-only"
+description = "Bounded no_std little-endian reader for GameMaker runtime parsers"
+
+[lib]
+path = "src/lib.rs"
+
+[workspace]

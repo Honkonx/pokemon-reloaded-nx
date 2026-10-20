@@ -1,0 +1,43 @@
+name: Problema al usar o compilar
+description: Algo no funciona. Los registros son imprescindibles; ninguno contiene datos del juego.
+labels: [problema]
+body:
+  - type: dropdown
+    id: etapa
+    attributes:
+      label: ¿Hasta dónde llegas?
+      options:
+        - No compila
+        - Compila pero no genera el NRO
+        - Genera el NRO pero no abre
+        - Abre pero no carga el juego
+        - Carga el juego pero falla al jugar
+        - Otra cosa
+    validations:
+      required: true
+  - type: textarea
+    id: descripcion
+    attributes:
+      label: Qué ocurre y qué esperabas
+    validations:
+      required: true
+  - type: input
+    id: versiones
+    attributes:
+      label: Versión del juego, de Atmosphère y del firmware
+      placeholder: "juego 1.9.2.2 · Atmosphère 1.12.1 · firmware 23.0.0"
+  - type: textarea
+    id: registros
+    attributes:
+      label: Registros
+      description: "Pega o adjunta `boot.log`, `engine.log` (y `engine.log.1`), `crash.log`, `last-session.txt` y, si puedes, `informe.txt` (menú → Diagnóstico → X). Si compilas: la salida completa del paso que falla y `scripts/doctor.ps1`."
+      render: text
+    validations:
+      required: true
+  - type: checkboxes
+    id: privacidad
+    attributes:
+      label: Antes de enviar
+      options:
+        - label: No adjunto el juego, sus datos ni rutas personales.
+          required: true

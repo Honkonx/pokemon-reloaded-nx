@@ -1,0 +1,12 @@
+[package]
+name = "gm8-input"
+version = "0.1.0"
+edition = "2021"
+license = "GPL-2.0-only"
+description = "Portable Switch-to-GameMaker 8 keyboard mapping for the OpenGMK Switch runtime"
+
+[lib]
+path = "src/lib.rs"
+
+[dependencies]
+

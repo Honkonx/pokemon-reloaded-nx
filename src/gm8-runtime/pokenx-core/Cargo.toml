@@ -1,0 +1,54 @@
+[package]
+name = "pokenx-core"
+version = "0.1.0"
+authors = ["The OpenGMK Project Developers", "poke-reloade-nx contributors"]
+edition = "2021"
+license = "GPL-2.0-only"
+description = "Headless GameMaker 8 runtime core derived from OpenGMK gm8emulator, for Horizon (no_std + alloc via pokenx-std)"
+
+[[example]]
+name = "inspect_compatibility"
+required-features = ["std"]
+test = true
+
+# Derived from OpenGMK gm8emulator at 9e4282e6 (GPL-2.0-only); see PROVENANCE.md.
+
+[build-dependencies]
+gl_generator = "0.14"
+
+[dependencies]
+encoding_rs = { version = "0.8", default-features = false, features = ["alloc"] }
+getrandom = { version = "0.2", features = ["custom"] }
+gm8-audio-output = { path = "../gm8-audio-output" }
+gm8-input = { path = "../gm8-input" }
+gm8-format-probe = { path = "../gm8-format-probe" }
+gm8-real = { path = "../gm8-real", default-features = false }
+gm8exe = { path = "../gm8exe", default-features = false }
+gml-parser = { path = "../gml-parser", default-features = false, features = ["runner-serde-derives"] }
+hex = { version = "0.4", default-features = false, features = ["alloc"] }
+indexmap = { version = "2.5.0", default-features = false, features = ["serde"] }
+postcard = { version = "1", default-features = false, features = ["alloc"] }
+miniz_oxide = { version = "0.8", default-features = false, features = ["with-alloc"] }
+nanomp3-core = { version = "0.2", default-features = false }
+phf = { version = "0.13", default-features = false, features = ["macros"] }
+pokenx-io = { path = "../pokenx-io", default-features = false }
+pokenx-std = { path = "../pokenx-std", default-features = false }
+time = { version = "0.3", default-features = false, features = ["macros"] }
+serde = { version = "1.0", default-features = false, features = ["derive", "alloc", "rc"] }
+
+[dev-dependencies]
+switch-pe-probe = { path = "../switch-pe-probe" }
+
+[features]
+default = ["std"]
+# Host builds and tests: real std behind pokenx-std.
+std = [
+    "pokenx-std/std",
+    "pokenx-io/std",
+    "gm8exe/std",
+    "gml-parser/std",
+    "gm8-real/std",
+    "indexmap/std",
+    "serde/std",
+    "hex/std",
+]

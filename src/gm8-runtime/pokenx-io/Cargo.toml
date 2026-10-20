@@ -1,0 +1,15 @@
+[package]
+name = "pokenx-io"
+version = "0.1.0"
+edition = "2021"
+license = "GPL-2.0-only"
+description = "Minimal io traits and little-endian byteorder extension that work with or without std, so OpenGMK crates can build for Horizon"
+
+[lib]
+path = "src/lib.rs"
+
+[features]
+default = ["std"]
+# With `std`, `io` re-exports std::io. Without it, a small alloc-only subset is used.
+std = []
+

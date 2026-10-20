@@ -1,0 +1,26 @@
+[package]
+name = "gm8exe"
+version = "0.2.0"
+authors = ["The OpenGMK Project Developers"]
+license = "GPL-2.0-only"
+edition = "2021"
+rust-version = "1.77"
+
+[features]
+default = ["std", "rayon"]
+std = ["pokenx-io/std", "miniz_oxide/std"]
+# Parallel asset decoding on hosts; Horizon builds run sequentially.
+rayon = ["dep:rayon", "std"]
+
+[dependencies]
+miniz_oxide = { version = "0.8.3", default-features = false, features = ["with-alloc"] }
+pokenx-io = { path = "../pokenx-io", default-features = false }
+rayon = { version = "1.10.0", optional = true }
+
+[[example]]
+name = "identify"
+required-features = ["std"]
+
+[[example]]
+name = "make_fixture"
+required-features = ["std"]

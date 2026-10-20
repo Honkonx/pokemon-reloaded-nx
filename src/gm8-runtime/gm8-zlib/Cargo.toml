@@ -1,0 +1,11 @@
+[package]
+name = "gm8-zlib"
+version = "0.1.0"
+edition = "2021"
+license = "GPL-2.0-only"
+description = "Bounded no_std zlib decompression adapter for the OpenGMK Switch runtime"
+
+[dependencies]
+miniz_oxide = { version = "=0.8.9", default-features = false, features = ["with-alloc"] }
+
+[workspace]

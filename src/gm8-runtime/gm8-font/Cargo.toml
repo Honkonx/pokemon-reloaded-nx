@@ -1,0 +1,16 @@
+[package]
+name = "gm8-font"
+version = "0.1.0"
+edition = "2021"
+license = "GPL-2.0-only"
+description = "Bounded no_std parser for GameMaker 8.0 Font assets"
+
+[dependencies]
+gm8-binary = { path = "../gm8-binary" }
+gm8-format-probe = { path = "../gm8-format-probe" }
+gm8-zlib = { path = "../gm8-zlib" }
+
+[dev-dependencies]
+miniz_oxide = { version = "=0.8.9", default-features = false, features = ["with-alloc"] }
+
+[workspace]

@@ -1,0 +1,11 @@
+[package]
+name = "switch-pe-probe"
+version = "0.1.0"
+edition = "2021"
+license = "GPL-2.0-only"
+description = "Minimal no_std PE envelope probe for Switch runtime feasibility"
+
+[lib]
+path = "src/lib.rs"
+
+[workspace]

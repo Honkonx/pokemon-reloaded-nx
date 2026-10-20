@@ -1,0 +1,11 @@
+[package]
+name = "gm8-assets"
+version = "0.1.0"
+edition = "2021"
+license = "GPL-2.0-only"
+description = "Bounded no_std index for standard GameMaker 8.0 resource payloads"
+
+[dependencies]
+gm8-format-probe = { path = "../gm8-format-probe" }
+
+[workspace]

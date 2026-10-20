@@ -1,0 +1,15 @@
+[package]
+name = "gm8-real"
+version = "0.1.0"
+edition = "2021"
+license = "GPL-2.0-only"
+description = "no_std GameMaker numeric type shared with OpenGMK"
+
+[dependencies]
+serde = { version = "1.0", default-features = false, features = ["derive", "alloc"] }
+libm = "0.2"
+
+[features]
+default = ["std"]
+std = ["serde/std"]
+

@@ -1,0 +1,23 @@
+# Workspace of the runtime crates that make up the Switch engine. The original OpenGMK desktop crates
+# (gm8emulator, gm8decompiler) are not part of this repository: pokenx-core is derived from gm8emulator
+# (see pokenx-core/PROVENANCE.md) and builds without them. pokenx-engine is its own workspace
+# (see pokenx-engine/Cargo.toml).
+[workspace]
+resolver = "2"
+exclude = ["gm8-format-probe", "gm8-binary", "switch-pe-probe", "pokenx-engine"]
+members = [
+    "gml-parser",
+    "gm8exe",
+    "gm8-input",
+    "gm8-audio-output",
+    "gm8-real",
+    "pokenx-io",
+    "pokenx-std",
+    "pokenx-core",
+]
+
+[profile.release]
+codegen-units = 1
+opt-level = 3
+lto = 'thin'
+strip = true

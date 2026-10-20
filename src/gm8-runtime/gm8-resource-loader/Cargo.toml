@@ -1,0 +1,18 @@
+[package]
+name = "gm8-resource-loader"
+version = "0.1.0"
+edition = "2021"
+license = "GPL-2.0-only"
+description = "Bounded GM8.0 indexed resource loader slice for Switch"
+
+[dependencies]
+gm8-assets = { path = "../gm8-assets" }
+gm8-background = { path = "../gm8-background" }
+gm8-format-probe = { path = "../gm8-format-probe" }
+gm8-sprite = { path = "../gm8-sprite" }
+gm8-zlib = { path = "../gm8-zlib" }
+
+[dev-dependencies]
+miniz_oxide = { version = "=0.8.9", default-features = false, features = ["with-alloc"] }
+
+[workspace]

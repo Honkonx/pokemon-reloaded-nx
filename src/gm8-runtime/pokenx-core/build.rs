@@ -1,0 +1,54 @@
+// Derived from OpenGMK gm8emulator/build.rs (GPL-2.0-only). The WGL/GLX bindings and the
+// Windows resource step are gone: the Horizon build only needs the GML argument macro and
+// the OpenGL 3.3 core bindings that the renderer loads through `eglGetProcAddress`.
+use gl_generator::{Api, Fallbacks, Profile, Registry, StructGenerator};
+use std::{
+    env,
+    error::Error,
+    fs::{self, File},
+    path::Path,
+};
+
+static OPENGL_EXTENSIONS: &[&str] = &[];
+
+fn main() -> Result<(), Box<dyn Error>> {
+    let out = env::var("OUT_DIR")?;
+
+    // that one giant macro in kernel.rs
+    let aa_macro_path = &Path::new(&out).join("_apply_args.macro.rs");
+    if !aa_macro_path.is_file() {
+        let i_char = |i| char::from(b'a' + i);
+        let mut aa_macro = String::with_capacity(16384);
+        aa_macro += &"macro_rules! _apply_args {\n    ($args: expr,) => { Ok(()) };\n".to_string();
+        for i in 1..=16 {
+            aa_macro += "    ($args: expr, ";
+            for j in 0..i {
+                aa_macro += &format!("${}: ident ", i_char(j));
+            }
+            aa_macro.truncate(aa_macro.len() - 1);
+            aa_macro += ") => {{\n        match $args {\n            [";
+            for j in 0..i {
+                aa_macro.push(i_char(j));
+                aa_macro += ", ";
+            }
+            aa_macro.truncate(aa_macro.len() - 2);
+            aa_macro += "] => Ok(( ";
+            for j in 0..i {
+                aa_macro += &format!("_arg_into!(${0}, {0})?, ", i_char(j));
+            }
+            aa_macro.truncate(aa_macro.len() - 2);
+            // `core::hint` so the generated code does not depend on `std`.
+            aa_macro += " )),\n            _ => unsafe { core::hint::unreachable_unchecked() },\n        }\n    }};\n";
+        }
+        aa_macro += "}\n";
+        fs::write(aa_macro_path, &aa_macro)?;
+    }
+
+    // opengl bindings
+    let mut bindings = File::create(&Path::new(&out).join("gl_bindings.rs"))?;
+    Registry::new(Api::Gl, (3, 3), Profile::Core, Fallbacks::All, &OPENGL_EXTENSIONS)
+        .write_bindings(StructGenerator, &mut bindings)?;
+
+    println!("cargo:rerun-if-changed=build.rs");
+    Ok(())
+}

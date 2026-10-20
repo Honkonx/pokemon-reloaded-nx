@@ -1,0 +1,34 @@
+[package]
+name = "pokenx-engine"
+version = "0.1.0"
+edition = "2021"
+license = "GPL-2.0-only"
+description = "Rust side of the PokeNX engine NRO: C ABI over EGL/GL, HID input, audio and log, built as a staticlib for a libnx C++ entrypoint"
+
+[lib]
+crate-type = ["staticlib", "rlib"]
+path = "src/lib.rs"
+
+[features]
+default = ["std"]
+# Host builds and tests (real std behind pokenx-std).
+std = ["pokenx-core/std"]
+# Horizon build: no_std, newlib allocator, panic handler, getrandom backend.
+# Build with `--no-default-features --features switch`.
+switch = []
+
+[dependencies]
+getrandom = { version = "0.2", features = ["custom"] }
+gm8-audio-output = { path = "../gm8-audio-output" }
+gm8-input = { path = "../gm8-input" }
+pokenx-core = { path = "../pokenx-core", default-features = false }
+
+[profile.release]
+panic = "abort"
+lto = false
+codegen-units = 1
+
+[profile.dev]
+panic = "abort"
+
+[workspace]
