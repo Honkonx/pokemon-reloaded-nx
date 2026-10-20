@@ -1625,18 +1625,85 @@ impl RendererTrait for RendererImpl {
                 }
             }
 
-            // Upload the same way on Horizon and the native host fixture. No
-            // atlas-sized CPU staging buffer is needed; release each sprite
-            // immediately after the synchronous client-memory upload.
+            // Optional faster upload (POKENX_UPLOAD_BANDS=1, set through dev-env.txt; the default stays one TexSubImage2D per
+            // sprite, the path that has run on the console). The stock atlases hold tens of thousands of small sprites and
+            // every call is a separate transfer through the driver, so this variant copies the sprites that sit entirely
+            // inside one fixed band of rows into a staging buffer as wide as the atlas and sends the band with a single call.
+            // Bands are disjoint, and a band's texels that no sprite covers stay zero, which is what the clear above left
+            // there. Sprites that cross a band edge, are taller than a band or do not fit the atlas width go up on their own
+            // AFTER all bands (a band would otherwise overwrite them with zeros).
+            const BAND_ROWS: i32 = 512;
+            let banded_upload = std::env::var_os("POKENX_UPLOAD_BANDS").is_some();
+            let pixel_format = if cfg!(target_os = "android") { gl::RGBA } else { gl::BGRA };
+            let mut stage: Vec<u8> = Vec::new();
             for (atlas_idx, tex_id) in textures.iter().enumerate() {
-                println!("mark: atlas {}/{}: upload sprites (at {:?})", atlas_idx + 1, textures.len(), atlas_t0.elapsed());
+                println!("mark: atlas {}/{}: upload sprites, {} (at {:?})", atlas_idx + 1, textures.len(), if banded_upload { "in bands" } else { "one call per sprite" }, atlas_t0.elapsed());
                 self.gl.BindTexture(gl::TEXTURE_2D, *tex_id);
                 self.current_atlas = atlas_idx as u32;
+                let atlas_w = packers[atlas_idx].size().0 as usize;
                 let mut uploaded = 0usize;
-                for (atl_ref, pixels) in sprites.iter_mut() {
+                let mut calls = 0usize;
+                let mut banded: Vec<usize> = Vec::new();
+                let mut single: Vec<usize> = Vec::new();
+                for (index, (atl_ref, pixels)) in sprites.iter().enumerate() {
                     if atl_ref.atlas_id as usize != atlas_idx {
                         continue;
                     }
+                    let row_bytes = atl_ref.w.max(0) as usize * 4;
+                    let inside_one_band = atl_ref.y >= 0
+                        && atl_ref.h > 0
+                        && atl_ref.y / BAND_ROWS == (atl_ref.y + atl_ref.h - 1) / BAND_ROWS;
+                    let fits = banded_upload
+                        && inside_one_band
+                        && atl_ref.x >= 0
+                        && atl_ref.w > 0
+                        && atl_ref.x as usize + atl_ref.w as usize <= atlas_w
+                        && pixels.len() >= row_bytes * atl_ref.h as usize;
+                    if fits { banded.push(index) } else { single.push(index) }
+                }
+
+                banded.sort_by_key(|&index| sprites[index].0.y / BAND_ROWS);
+                let mut start = 0usize;
+                while start < banded.len() {
+                    let band = sprites[banded[start]].0.y / BAND_ROWS;
+                    let mut end = start;
+                    let mut top = i32::MAX;
+                    let mut bottom = 0;
+                    while end < banded.len() && sprites[banded[end]].0.y / BAND_ROWS == band {
+                        let r = &sprites[banded[end]].0;
+                        top = top.min(r.y);
+                        bottom = bottom.max(r.y + r.h);
+                        end += 1;
+                    }
+                    let rows = (bottom - top) as usize;
+                    stage.clear();
+                    stage.resize(atlas_w * rows * 4, 0);
+                    for &index in &banded[start..end] {
+                        let (r, pixels) = &mut sprites[index];
+                        let row_bytes = r.w as usize * 4;
+                        for row in 0..r.h as usize {
+                            let to = ((r.y - top) as usize + row) * atlas_w * 4 + r.x as usize * 4;
+                            stage[to..to + row_bytes].copy_from_slice(&pixels[row * row_bytes..(row + 1) * row_bytes]);
+                        }
+                        *pixels = Box::default();
+                    }
+                    if calls == 0 {
+                        println!("mark: atlas {}/{}: first band {}x{} begins (at {:?})", atlas_idx + 1, textures.len(), atlas_w, rows, atlas_t0.elapsed());
+                    }
+                    self.gl.TexSubImage2D(
+                        gl::TEXTURE_2D, 0, 0, top, atlas_w as _, rows as _,
+                        pixel_format, gl::UNSIGNED_BYTE, stage.as_ptr() as _,
+                    );
+                    uploaded += end - start;
+                    calls += 1;
+                    start = end;
+                }
+                if banded_upload {
+                    println!("mark: atlas {}/{}: {} sprite(s) in {} band call(s), {} left to upload one by one (at {:?})", atlas_idx + 1, textures.len(), uploaded, calls, single.len(), atlas_t0.elapsed());
+                }
+
+                for index in single {
+                    let (atl_ref, pixels) = &mut sprites[index];
                     // The first upload on its own, then a progress mark every 2000 sprites: a driver that stalls shows as
                     // a last mark that never advances, one that is only slow shows the rate.
                     if uploaded == 0 {
@@ -1645,8 +1712,7 @@ impl RendererTrait for RendererImpl {
                     // AtlasBuilder validated exact dimensions and buffer length.
                     self.gl.TexSubImage2D(
                         gl::TEXTURE_2D, 0, atl_ref.x, atl_ref.y, atl_ref.w, atl_ref.h,
-                        if cfg!(target_os = "android") { gl::RGBA } else { gl::BGRA },
-                        gl::UNSIGNED_BYTE, pixels.as_ptr() as _,
+                        pixel_format, gl::UNSIGNED_BYTE, pixels.as_ptr() as _,
                     );
                     *pixels = Box::default();
                     uploaded += 1;
@@ -1655,6 +1721,7 @@ impl RendererTrait for RendererImpl {
                     }
                 }
             }
+            drop(stage);
 
             println!("mark: atlases uploaded at {:?}", atlas_t0.elapsed());
             // verify it actually worked

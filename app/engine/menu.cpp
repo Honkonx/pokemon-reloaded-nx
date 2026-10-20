@@ -139,6 +139,17 @@ Memory read_memory() {
 
 std::string mib(unsigned long long bytes) { return std::to_string(bytes >> 20) + " MiB"; }
 
+// install-source.txt says that the app itself installed the current game from a ZIP ("zip", then the size of the game's
+// .exe at that moment). The boot log compares it with the .exe that is there now: equal means imported by the app,
+// anything else means the folder was filled by hand (or by a build from before this marker). Written once per import and
+// read once per start, never per frame.
+constexpr const char* kInstallSourcePath = "sdmc:/switch/pokenx/install-source.txt";
+
+long long file_size_of(const std::string& path) {
+    struct stat info;
+    return stat(path.c_str(), &info) == 0 ? static_cast<long long>(info.st_size) : -1;
+}
+
 // ---- Preloading the game while the menu is open -------------------------------------------------------------------
 // Reading and parsing the .exe takes about 6 s; a worker thread starts it when the menu opens so that "Jugar" can skip it
 // (loader::launch takes the result). Whatever else calls into the Rust side (import, backups, key reading) first waits for
@@ -1290,7 +1301,16 @@ std::string import_zip(const std::string& zip_path) {
     context.name = short_name(zip_path);
     draw_import_progress(context.name, 0, 0);
     const int32_t code = pokenx_import_zip(zip_path.c_str(), on_progress, &context);
-    if (code == 0) return "Importación completada: el juego quedó en sdmc:/switch/pokenx/game/.";
+    if (code == 0) {
+        const GameState installed = detect_game();
+        if (installed.found) {
+            if (FILE* marker = std::fopen(kInstallSourcePath, "w")) {
+                std::fprintf(marker, "zip\n%lld\n", file_size_of(installed.text));
+                std::fclose(marker);
+            }
+        }
+        return "Importación completada: el juego quedó en sdmc:/switch/pokenx/game/.";
+    }
     char text[200] = {0};
     pokenx_import_error_text(code, text, sizeof(text));
     return std::string("Importación no instalada: ") + text + ".";
@@ -2171,8 +2191,34 @@ void draw_loading(const GameState& game) {
     gfx::end();
 }
 
+// One line in boot.log per start: which build, handheld or docked, memory and how the game got onto the SD. It is what
+// makes a "it worked for me" or "it did not" report usable.
+void log_session(const GameState& game) {
+    FILE* boot = std::fopen("sdmc:/switch/pokenx/logs/boot.log", "a");
+    if (!boot) return;
+    const Memory memory = read_memory();
+    const bool docked = appletGetOperationMode() == AppletOperationMode_Console;
+    const char* source = "no game found";
+    if (game.found) {
+        source = "a folder (copied by hand, or installed before this marker existed)";
+        if (FILE* marker = std::fopen(kInstallSourcePath, "r")) {
+            char how[16] = {0};
+            long long marked = -1;
+            if (std::fscanf(marker, "%15s %lld", how, &marked) == 2 && std::strcmp(how, "zip") == 0 &&
+                marked == file_size_of(game.text))
+                source = "a ZIP imported by the app";
+            std::fclose(marker);
+        }
+    }
+    std::fprintf(boot, "5. session: build %s %s, %s, memory total %llu MiB used %llu MiB, game installed from %s\n", __DATE__,
+                 __TIME__, docked ? "docked" : "handheld", static_cast<unsigned long long>(memory.total >> 20),
+                 static_cast<unsigned long long>(memory.used >> 20), source);
+    std::fclose(boot);
+}
+
 MenuResult run_graphical(const MenuInfo& info) {
     GameState game = detect_game();
+    log_session(game);
     preload_start(game, read_memory());
     std::string note;
     int selected = game.found && info.play_allowed ? 0 : 1;

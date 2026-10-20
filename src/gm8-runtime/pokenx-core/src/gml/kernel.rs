@@ -578,6 +578,9 @@ impl Game {
         let y = y.max(0);
         let w = w.min(self.unscaled_width as i32 - x);
         let h = h.min(self.unscaled_height as i32 - y);
+        if w <= 0 || h <= 0 {
+            return Ok(Default::default()); // nothing left to copy after clamping to the screen or surface
+        }
         self.renderer.flush_queue();
         let rgba = self.renderer.get_pixels(x, y, w, h);
         let mut image = RgbaImage::from_vec(w as _, h as _, rgba.into()).unwrap();
@@ -2489,6 +2492,9 @@ impl Game {
             let y = y.max(0);
             let w = w.min(surf.width as i32 - x);
             let h = h.min(surf.height as i32 - y);
+            if w <= 0 || h <= 0 {
+                return Ok(Default::default()); // nothing left to copy after clamping to the screen or surface
+            }
             let mut image =
                 RgbaImage::from_vec(w as _, h as _, self.renderer.dump_sprite_part(surf.atlas_ref, x, y, w, h).into())
                     .unwrap();
@@ -8409,6 +8415,9 @@ impl Game {
         let y = y.max(0);
         let width = width.min(self.unscaled_width as i32 - x);
         let height = height.min(self.unscaled_height as i32 - y);
+        if width <= 0 || height <= 0 {
+            return Ok((-1).into()); // nothing left to copy after clamping to the screen or surface
+        }
         self.renderer.flush_queue();
         let rgba = self.renderer.get_pixels(x, y, width, height);
         let mut image = RgbaImage::from_vec(width as _, height as _, rgba.into_vec()).unwrap();
@@ -8453,6 +8462,9 @@ impl Game {
             let y = y.max(0);
             let width = width.min(self.unscaled_width as i32 - x);
             let height = height.min(self.unscaled_height as i32 - y);
+            if width <= 0 || height <= 0 {
+                return Ok(Default::default()); // nothing left to copy after clamping to the screen or surface
+            }
             self.renderer.flush_queue();
             let rgba = self.renderer.get_pixels(x, y, width, height);
             let mut image = RgbaImage::from_vec(width as _, height as _, rgba.into_vec()).unwrap();
@@ -8506,6 +8518,9 @@ impl Game {
             let y = y.max(0);
             let width = width.min(surf.width as i32 - x);
             let height = height.min(surf.height as i32 - y);
+            if width <= 0 || height <= 0 {
+                return Ok((-1).into()); // nothing left to copy after clamping to the screen or surface
+            }
             let (removeback, fill_transparent) = match self.gm_version {
                 Version::GameMaker8_0 => (transparency != 0, true),
                 Version::GameMaker8_1 => (transparency == 1, transparency != 2),
@@ -8560,6 +8575,9 @@ impl Game {
                 let y = y.max(0);
                 let width = width.min(surf.width as i32 - x);
                 let height = height.min(surf.height as i32 - y);
+                if width <= 0 || height <= 0 {
+                    return Ok(Default::default()); // nothing left to copy after clamping to the screen or surface
+                }
                 let rgba = self.renderer.dump_sprite_part(surf.atlas_ref, x, y, width, height);
                 let mut image = RgbaImage::from_vec(width as _, height as _, rgba.into_vec()).unwrap();
                 asset::sprite::process_image(&mut image, removeback, smooth, true);
@@ -8914,7 +8932,8 @@ impl Game {
     pub fn sprite_save(&mut self, args: &[Value]) -> gml::Result<Value> {
         let (sprite_id, subimg, fname) = expect_args!(args, [int, int, string])?;
         if let Some(sprite) = self.assets.sprites.get_asset(sprite_id) {
-            let image_index = subimg % sprite.frames.len() as i32;
+            // A sprite without frames has nothing to save (and `% 0` would abort the process).
+            let image_index = subimg.checked_rem(sprite.frames.len() as i32).unwrap_or(0);
             if let Some(frame) = sprite.get_frame(image_index) {
                 // get RGBA
                 if let Err(e) = file::save_image(
@@ -9085,6 +9104,9 @@ impl Game {
         let y = y.max(0);
         let width = width.min(self.unscaled_width as i32 - x);
         let height = height.min(self.unscaled_height as i32 - y);
+        if width <= 0 || height <= 0 {
+            return Ok((-1).into()); // nothing left to copy after clamping to the screen or surface
+        }
         self.renderer.flush_queue();
         let rgba = self.renderer.get_pixels(x, y, width, height);
         let mut image = RgbaImage::from_vec(width as _, height as _, rgba.into_vec()).unwrap();
@@ -9114,6 +9136,9 @@ impl Game {
             let y = y.max(0);
             let width = width.min(surf.width as i32 - x);
             let height = height.min(surf.height as i32 - y);
+            if width <= 0 || height <= 0 {
+                return Ok((-1).into()); // nothing left to copy after clamping to the screen or surface
+            }
             let rgba = self.renderer.dump_sprite_part(surf.atlas_ref, x, y, width, height);
             let mut image = RgbaImage::from_vec(width as _, height as _, rgba.into_vec()).unwrap();
             asset::sprite::process_image(&mut image, removeback, smooth, true);

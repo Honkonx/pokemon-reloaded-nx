@@ -22,6 +22,7 @@ El programa murió antes de ejecutar código propio. Si **no existe `boot.log`**
 | `3. main() started` | entró en `main` |
 | `4. graphical menu ready` | el menú gráfico pudo dibujar |
 | `4. graphical menu FAILED…` | no hubo framebuffer o fuente: se usa el menú de texto |
+| `5. session: build …` | una sola vez por arranque: fecha de la compilación, portátil o dock, memoria total y usada, y cómo llegó el juego a la microSD (ZIP importado por la aplicación, o una carpeta copiada a mano). Es lo primero que conviene mirar en un informe |
 
 ### «Jugar» está bloqueado
 Estás en **modo applet** (poca memoria). Abre el programa como aplicación: abre cualquier juego **manteniendo R** y elige PokeNX, o crea un acceso directo en HOME.

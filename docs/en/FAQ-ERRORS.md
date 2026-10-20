@@ -22,6 +22,7 @@ The program died before running its own code. If **`boot.log` does not exist**, 
 | `3. main() started` | `main` was entered |
 | `4. graphical menu ready` | the graphical menu could draw |
 | `4. graphical menu FAILED…` | no framebuffer or font: the text menu is used |
+| `5. session: build …` | once per start: build date, handheld or docked, total and used memory, and how the game reached the microSD (a ZIP imported by the app, or a folder copied by hand). The first thing worth reading in a report |
 
 ### "Jugar" is blocked
 You are in **applet mode** (low memory). Open the program as an application: open any game **while holding R** and choose PokeNX, or create a HOME-menu shortcut.

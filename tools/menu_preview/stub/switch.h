@@ -70,6 +70,9 @@ inline Result threadClose(Thread*) { return 0; }
 
 bool appletMainLoop();  // preview.cpp: false once the requested frames were drawn
 
+enum AppletOperationMode { AppletOperationMode_Handheld = 0, AppletOperationMode_Console = 1 };
+inline AppletOperationMode appletGetOperationMode() { return AppletOperationMode_Handheld; }  // the boot log line only
+
 enum { InfoType_TotalMemorySize = 6, InfoType_UsedMemorySize = 7 };
 #define CUR_PROCESS_HANDLE 0xFFFF8001u
 inline Result svcGetInfo(u64* out, int type, u32, u64) { *out = type == InfoType_TotalMemorySize ? (3189ULL << 20) : (3185ULL << 20); return 0; }

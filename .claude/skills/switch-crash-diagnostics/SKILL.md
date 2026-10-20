@@ -8,7 +8,7 @@ description: Diagnosticar un NRO que se cierra o falla en la Switch con los regi
 Quien reporta copia `sdmc:/switch/pokenx/logs/` a un lugar donde puedas leerlo (esa carpeta no debe versionarse: puede contener rutas del juego). Lee **todo** lo que haya antes de suponer una causa.
 
 ## Qué escribe cada pieza (orden de arranque)
-1. `boot.log` — `1.` libnx inicializado (con memoria total/usada y montón), `2.` constructores estáticos, `3.` `main()`, `4.` menú gráfico listo (o su fallo). **La última marca dice hasta dónde llegó el proceso.**
+1. `boot.log` — `1.` libnx inicializado (con memoria total/usada y montón), `2.` constructores estáticos, `3.` `main()`, `4.` menú gráfico listo (o su fallo), `5.` datos de la sesión (compilación, portátil o dock, memoria y cómo se instaló el juego). **La última marca dice hasta dónde llegó el proceso.**
 2. `engine.log` (+ `engine.log.1`, la ejecución anterior) — cada línea con `[ms]`: trazas de EGL, memoria antes/después de cargar, fases de `Game::launch` (`launch: before …`), `game started` o `load failed`, avisos de vídeo.
 3. `crash.log` — si hubo una excepción de CPU: tipo, `pc`, `lr`, `sp`, `far`, `esr`, base del módulo y registros.
 4. `last-session.txt` — el motivo de la última salida, que el menú muestra la siguiente vez.
